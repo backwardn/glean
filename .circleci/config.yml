@@ -235,6 +235,17 @@ jobs:
           path: raw_xcodetest.log
           destination: log
       - run:
+          name: Build framework archive
+          command: |
+            carthage build --platform iOS --cache-builds --no-skip-current
+            carthage archive Glean
+
+            # Prepare sample app to use binary build
+            binarypath=$(pwd)/Glean.framework.zip
+            # We just always use v1.0.0 as the specifier here.
+            echo "{\"1.0.0\": \"file://${binarypath}\"}" > Glean.framework.json
+            sed -i.bak 's#.\+mozilla/glean.\+#binary "../../../Glean.framework.json" ~> 1.0.0#' samples/ios/app/Cartfile
+      - run:
           name: Build sample app and run tests
           command: |
             bash bin/run-ios-sample-app-build.sh
